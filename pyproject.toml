@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pxl-cleanup"
+version = "0.1.0"
+description = "Turn AI-generated pixel-style images into true, grid-aligned pixel art sprites."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Alvin Crespo" }]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pillow>=10",
+    "scipy>=1.10",
+    "unfake>=1.0.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+pxl-cleanup = "pxl_cleanup.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
