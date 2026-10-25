@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,15 +7,29 @@ name = "pxl-cleanup"
 version = "0.1.0"
 description = "Turn AI-generated pixel-style images into true, grid-aligned pixel art sprites."
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Alvin Crespo" }]
 requires-python = ">=3.10"
+keywords = ["pixel-art", "sprites", "gamedev", "ai-art", "image-processing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+]
 dependencies = [
     "numpy>=1.24",
     "pillow>=10",
     "scipy>=1.10",
     "unfake>=1.0.7",
 ]
+
+[project.urls]
+Homepage = "https://github.com/alvincrespo/pxl-cleanup"
+Issues = "https://github.com/alvincrespo/pxl-cleanup/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]

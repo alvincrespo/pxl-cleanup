@@ -4,17 +4,18 @@ Turn AI-generated "pixel art" into real pixel art sprites.
 
 Image models like FLUX produce images that *look* like pixel art from a distance, but the "pixels" are uneven blocks with gradients inside them, sitting on a background, with tens of thousands of colors. `pxl-cleanup` turns that into a small, grid-aligned, transparent sprite with a limited palette, ready to animate or drop into a game.
 
-![Before and after: an 880x672 AI-generated T-Rex becomes a 128x128 transparent sprite](examples/trex/before-after.png)
+![Before and after: an 880x672 AI-generated T-Rex becomes a 128x128 transparent sprite](https://raw.githubusercontent.com/alvincrespo/pxl-cleanup/main/examples/trex/before-after.png)
 
 ## Install
 
 Requires Python 3.10+.
 
 ```bash
-git clone https://github.com/alvincrespo/pxl-cleanup.git
-cd pxl-cleanup
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e .
+# run once without installing
+uvx pxl-cleanup trex.jpg
+
+# or install the command
+uv tool install pxl-cleanup     # or: pipx install pxl-cleanup / pip install pxl-cleanup
 ```
 
 ## Usage
@@ -68,14 +69,21 @@ The background stage assumes an outlined character on a plain light background. 
 
 ## Example
 
-[`examples/trex/`](examples/trex/) has the source image and the output of every stage, including a 15-color version.
+[`examples/trex/`](https://github.com/alvincrespo/pxl-cleanup/tree/main/examples/trex) has the source image and the output of every stage, including a 15-color version.
 
 ## Development
 
 ```bash
+git clone https://github.com/alvincrespo/pxl-cleanup.git
+cd pxl-cleanup
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest
 ```
+
+## Releasing
+
+Publishing to PyPI is automated. Bump `version` in `pyproject.toml` and `__version__` in `src/pxl_cleanup/__init__.py`, push, then create a GitHub release with a matching tag (for example `v0.1.1`). The `publish` workflow builds the package and uploads it to PyPI using trusted publishing, so no API token is stored anywhere.
 
 ## License
 
