@@ -9,13 +9,21 @@ from scipy import ndimage
 from scipy.cluster.vq import kmeans2
 
 
-def remove_background(img: Image.Image, ground_band: float = 0.80) -> Image.Image:
+def remove_background(img: Image.Image, ground_band: float = 0.80,
+                      fill_holes: bool = True, hole_min: float = 0.003) -> Image.Image:
     """Stage 1: remove a plain light background and any ground patch, then crop.
 
     Near-white pixels, plus warm brown pixels in the bottom part of the image,
     are treated as background when they connect to the image border. The
     sprite's dark outline stops the fill, so light areas enclosed by the
     outline (teeth, eye highlights, a pale belly) are kept.
+
+    Background can also be trapped inside the sprite, for example between legs
+    whose feet touch or that stand on a shadow line. With fill_holes, an
+    enclosed white patch is removed too when it is the same flat color as the
+    outer background and covers at least hole_min of the sprite's area.
+    Shaded or off-white areas (eye whites, cream bellies) and tiny highlights
+    are kept.
 
     ground_band: fraction of the image height below which brown "dirt" pixels
     count as background. Set to 1.0 to disable ground removal.
@@ -32,6 +40,9 @@ def remove_background(img: Image.Image, ground_band: float = 0.80) -> Image.Imag
     labels, _ = ndimage.label(white | ground)
     edge = np.concatenate([labels[0], labels[-1], labels[:, 0], labels[:, -1]])
     background = np.isin(labels, edge[edge > 0])
+
+    if fill_holes:
+        background |= _enclosed_background(rgb, white, background, hole_min)
     # Swallow the 1-2px light JPEG halo between the background and the outline.
     background |= ndimage.binary_dilation(background, iterations=2) & (mn > 150)
 
@@ -41,6 +52,30 @@ def remove_background(img: Image.Image, ground_band: float = 0.80) -> Image.Imag
     out = np.dstack([rgb.astype(np.uint8), alpha])
     ys, xs = np.where(alpha > 0)
     return Image.fromarray(out[ys.min():ys.max() + 1, xs.min():xs.max() + 1], "RGBA")
+
+
+def _enclosed_background(rgb: np.ndarray, white: np.ndarray, background: np.ndarray,
+                         hole_min: float) -> np.ndarray:
+    """White patches inside the sprite that match the outer background."""
+    outer = white & background
+    if not outer.any():
+        return np.zeros_like(white)
+    bg_color = np.median(rgb[outer], axis=0)
+    sprite_area = max(int((~background).sum()), 1)
+
+    holes = np.zeros_like(white)
+    labels, n = ndimage.label(white & ~background)
+    for i, sl in enumerate(ndimage.find_objects(labels), start=1):
+        region = labels[sl] == i
+        area = int(region.sum())
+        if area < hole_min * sprite_area:
+            continue  # small highlight, glint or tooth
+        pix = rgb[sl][region]
+        same_color = np.abs(np.median(pix, axis=0) - bg_color).max() <= 10
+        flat = pix.std(axis=0).max() <= 6  # painted white has shading; background doesn't
+        if same_color and flat:
+            holes[sl] |= region
+    return holes
 
 
 def recover_grid(img: Image.Image, pixel_size: int | None = 6, max_colors: int = 32) -> Image.Image:

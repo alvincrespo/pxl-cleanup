@@ -40,13 +40,14 @@ Every stage is saved as its own PNG, so when a result looks wrong you can see wh
 | `--canvas` | `128` | Square canvas size. Keep it the same across a roster. |
 | `--margin` | `4` | Empty pixels below the feet, for a shadow or platform. |
 | `--ground-band` | `0.80` | Brown pixels below this fraction of the image height are removed as ground. `1.0` disables it. |
+| `--keep-enclosed-white` | off | Keep flat white areas inside the sprite. Use it for a character with a plain white patch, like a penguin's belly, that would otherwise be removed as trapped background. |
 | `-o`, `--out` | `out` | Output folder. Each input gets a subfolder named after the file. |
 
 ## How it works
 
 | Stage | Output | What happens |
 |---|---|---|
-| 1. Remove background | `1_nobg.png` | A flood fill from the image edges removes near-white background and a brown ground patch. The sprite's dark outline stops the fill, so light areas inside it (teeth, eyes, a pale belly) are kept. The result is cropped to the sprite. No AI model is needed for outlined sprites on a plain background. |
+| 1. Remove background | `1_nobg.png` | A flood fill from the image edges removes near-white background and a brown ground patch. The sprite's dark outline stops the fill, so light areas inside it (teeth, eyes, a pale belly) are kept. Background trapped inside the sprite, such as the gap between legs standing on a shadow line, is removed too when it's the same flat white as the outer background. The result is cropped to the sprite. No AI model is needed for outlined sprites on a plain background. |
 | 2. Recover the grid | `2_grid.png` | [unfake](https://pypi.org/project/unfake/) measures the fake pixel blocks and rebuilds each one as a single real pixel. The T-Rex goes from 680×558 to 113×92. |
 | 3. Reduce the palette | `3_palette.png` | k-means clustering over the distinct colors (not pixel counts), so small accents like a stripe or an eye keep their own color instead of being averaged into large areas. |
 | 4. Place on canvas | `4_final.png` | The sprite is bottom-centered on a square transparent canvas, with its feet a fixed distance from the bottom. Any two sprites line up without per-sprite positioning. |

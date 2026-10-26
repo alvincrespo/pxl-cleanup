@@ -44,6 +44,53 @@ def test_remove_background_keeps_enclosed_light_pixels(fake_pixel_art):
     assert belly[3] == 255 and tuple(belly[:3]) == BELLY
 
 
+def legs_on_shadow(gap_fill=(255, 255, 255)) -> Image.Image:
+    """A body with two legs standing on a dark shadow line, all on white.
+
+    The gap between the legs is sealed on every side (body above, legs on
+    the sides, shadow below), so a flood fill from the border can't reach it.
+    """
+    img = Image.new("RGB", (240, 240), (255, 255, 255))
+    px = img.load()
+    def rect(x0, y0, x1, y1, color):
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                px[x, y] = color
+    rect(60, 60, 180, 140, OUTLINE)       # body outline
+    rect(66, 66, 174, 134, BODY)
+    rect(60, 140, 96, 200, OUTLINE)       # left leg
+    rect(144, 140, 180, 200, OUTLINE)     # right leg
+    rect(96, 140, 144, 200, gap_fill)     # the gap between the legs
+    rect(54, 200, 186, 204, (70, 45, 35))  # dark shadow line under the feet
+    return img
+
+
+def test_remove_background_clears_white_trapped_between_legs():
+    a = np.array(remove_background(legs_on_shadow()))
+    # gap is at x 96-143, y 140-199 in the source; the crop starts at (54, 60)
+    gap = a[140 - 60 + 10:200 - 60 - 10, 96 - 54 + 10:144 - 54 - 10, 3]
+    assert (gap == 0).all()
+
+
+def test_remove_background_keeps_enclosed_white_when_asked():
+    a = np.array(remove_background(legs_on_shadow(), fill_holes=False))
+    gap = a[140 - 60 + 10:200 - 60 - 10, 96 - 54 + 10:144 - 54 - 10, 3]
+    assert (gap == 255).all()
+
+
+def test_remove_background_keeps_shaded_white_inside_sprite():
+    # A painted white area has shading; trapped background is flat.
+    img = legs_on_shadow()
+    px = img.load()
+    for y in range(140, 200):
+        for x in range(96, 144):
+            v = 255 - ((x // 4 + y // 4) % 2) * 22  # 255/233 shading pattern
+            px[x, y] = (v, v, v)
+    a = np.array(remove_background(img))
+    gap = a[140 - 60 + 10:200 - 60 - 10, 96 - 54 + 10:144 - 54 - 10, 3]
+    assert (gap == 255).all()
+
+
 def test_recover_grid_returns_true_resolution(fake_pixel_art):
     grid = recover_grid(remove_background(fake_pixel_art), pixel_size=SCALE)
     assert grid.size == (16, 14)

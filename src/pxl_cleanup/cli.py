@@ -12,10 +12,10 @@ from .stages import count_colors, place_on_canvas, recover_grid, reduce_palette,
 
 
 def clean(path: Path, out_dir: Path, *, pixel_size: int | None, colors: int,
-          canvas: int, margin: int, ground_band: float) -> str:
+          canvas: int, margin: int, ground_band: float, fill_holes: bool = True) -> str:
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    nobg = remove_background(Image.open(path), ground_band=ground_band)
+    nobg = remove_background(Image.open(path), ground_band=ground_band, fill_holes=fill_holes)
     nobg.save(out_dir / "1_nobg.png")
 
     grid = recover_grid(nobg, pixel_size=pixel_size)
@@ -47,6 +47,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--margin", type=int, default=4, help="empty pixels below the feet (default: 4)")
     p.add_argument("--ground-band", type=float, default=0.80,
                    help="brown pixels below this fraction of the height are treated as ground (default: 0.80; 1.0 disables)")
+    p.add_argument("--keep-enclosed-white", action="store_true",
+                   help="keep flat white areas inside the sprite instead of treating them as trapped background "
+                        "(use for sprites with a plain white patch, like a penguin's belly)")
     p.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     args = p.parse_args(argv)
 
@@ -55,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             print(clean(path, args.out / path.stem, pixel_size=args.pixel_size or None,
                         colors=args.colors, canvas=args.canvas, margin=args.margin,
-                        ground_band=args.ground_band))
+                        ground_band=args.ground_band, fill_holes=not args.keep_enclosed_white))
         except Exception as e:  # keep going through a batch
             failed += 1
             print(f"{path.name}: FAILED: {e}", file=sys.stderr)
